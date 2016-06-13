@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "bs.h"
 #include "kv.h"
@@ -17,6 +18,13 @@
 
 Server  *server = NULL;
 sqlite3 *DB = NULL;
+
+pthread_t ntid;
+
+void *thr_fn(void *arg)
+{
+    system("sh static/capture.sh");
+}
 
 static void sig(int signum)
 {
@@ -111,7 +119,7 @@ int main(int argc, char *argv[])
 
     initDB();
 
-    uint16_t server_port = 8080;
+    uint16_t server_port = 8082;
     if (argc > 1) {
         if (sscanf(argv[1], "%u", &server_port) == 0 || server_port > 65535) {
             fprintf(stderr, "error: invalid command line argument, using default port 8080.\n");
@@ -134,6 +142,13 @@ int main(int argc, char *argv[])
     serverAddHandler(server, dashboard);
     serverAddHandler(server, home);
     serverAddHandler(server, session);
+
+    int err = pthread_create(&ntid, NULL, thr_fn, "new thread: ");
+    if (err != 0) {
+        fprintf(stderr, "can't create thread: %s\n", strerror(err));
+        exit(1);
+    }
+
     serverServe(server);
 
     return 0;

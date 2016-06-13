@@ -1,5 +1,5 @@
 CFLAGS = -O2 -g -std=c99 -Wall -I include
-LDFLAGS = -lsqlite3
+LDFLAGS = -lsqlite3  -lpthread
 
 ifeq ($(OS),Windows_NT)
 	LDFLAGS += -lws2_32
