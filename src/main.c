@@ -20,10 +20,17 @@ Server  *server = NULL;
 sqlite3 *DB = NULL;
 
 pthread_t ntid;
+pthread_t cv_manager;
 
 void *thr_fn(void *arg)
 {
     system("sh static/capture.sh");
+}
+
+void *cv_fn(void *arg)
+{
+    sleep(5);
+    system("sh static/download.sh");
 }
 
 static void sig(int signum)
@@ -144,6 +151,12 @@ int main(int argc, char *argv[])
     serverAddHandler(server, session);
 
     int err = pthread_create(&ntid, NULL, thr_fn, "new thread: ");
+    if (err != 0) {
+        fprintf(stderr, "can't create thread: %s\n", strerror(err));
+        exit(1);
+    }
+
+    err = pthread_create(&cv_manager, NULL, cv_fn, "new thread: ");
     if (err != 0) {
         fprintf(stderr, "can't create thread: %s\n", strerror(err));
         exit(1);
