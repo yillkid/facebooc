@@ -117,6 +117,7 @@ static Response *signup(Request *);
 static Response *about(Request *);
 static Response *notFound(Request *);
 static Response *save(Request *);
+static Response *reset(Request *);
 
 int main(int argc, char *argv[])
 {
@@ -154,6 +155,7 @@ int main(int argc, char *argv[])
     serverAddHandler(server, home);
     serverAddHandler(server, session);
     serverAddHandler(server, save);
+    serverAddHandler(server, reset);
     
     int err = pthread_create(&ntid, NULL, cap_fn, "new thread: ");
     if (err != 0) {
@@ -771,4 +773,19 @@ static Response *save(Request *req)
 
     return responseNewRedirect("/");
 
+}
+
+static Response *reset(Request *req)
+{
+    EXACT_ROUTE(req, "/reset/");
+    Response *response = responseNew();
+
+    // Reset DB
+    system("rm -rf db.sqlite3");
+    initDB();
+
+    // Reset video
+    system("rm -rf static/stream.ogg");
+
+    return responseNewRedirect("/");
 }
