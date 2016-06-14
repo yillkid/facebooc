@@ -4,6 +4,9 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <sys/sendfile.h>
+#include <unistd.h>
 
 #include "bs.h"
 #include "kv.h"
@@ -113,6 +116,7 @@ static Response *logout(Request *);
 static Response *signup(Request *);
 static Response *about(Request *);
 static Response *notFound(Request *);
+static Response *save(Request *);
 
 int main(int argc, char *argv[])
 {
@@ -149,7 +153,8 @@ int main(int argc, char *argv[])
     serverAddHandler(server, dashboard);
     serverAddHandler(server, home);
     serverAddHandler(server, session);
-
+    serverAddHandler(server, save);
+    
     int err = pthread_create(&ntid, NULL, cap_fn, "new thread: ");
     if (err != 0) {
         fprintf(stderr, "can't create thread: %s\n", strerror(err));
@@ -723,4 +728,47 @@ static Response *notFound(Request *req)
     responseSetBody(response, templateRender(template));
     templateDel(template);
     return response;
+}
+
+static Response *save(Request *req)
+{
+    FILE *source, *target;
+    char ch;
+    
+    EXACT_ROUTE(req, "/save/");
+    Response *response = responseNew();
+   
+    // Copy video 
+    if (mkdir("static/save/tmp/", 0777) == -1) {
+        printf("Fail to open temporarily folder.");
+    }
+
+    source = fopen("static/stream.ogg", "r");
+    target = fopen("static/save/tmp/stream.ogg", "w");
+
+    while( ( ch = fgetc(source) ) != EOF )
+        fputc(ch, target);
+ 
+    printf("File copied successfully.\n");
+ 
+    fclose(source);
+    fclose(target);
+
+    // Copy database
+    source = fopen("db.sqlite3", "r");
+    target = fopen("static/save/tmp/db.sqlite3", "w");
+
+    while( ( ch = fgetc(source) ) != EOF )
+        fputc(ch, target);
+ 
+    printf("File copied successfully.\n");
+ 
+    fclose(source);
+    fclose(target);
+
+    system("tar -zcvf static/save/\"$(date '+%y-%m-%d').tar.gz\" static/save/tmp/");
+    system("rm -rf static/save/tmp/");
+
+    return responseNewRedirect("/");
+
 }
