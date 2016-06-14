@@ -22,7 +22,7 @@ sqlite3 *DB = NULL;
 pthread_t ntid;
 pthread_t cv_manager;
 
-void *thr_fn(void *arg)
+void *cap_fn(void *arg)
 {
     system("sh static/capture.sh");
 }
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     serverAddHandler(server, home);
     serverAddHandler(server, session);
 
-    int err = pthread_create(&ntid, NULL, thr_fn, "new thread: ");
+    int err = pthread_create(&ntid, NULL, cap_fn, "new thread: ");
     if (err != 0) {
         fprintf(stderr, "can't create thread: %s\n", strerror(err));
         exit(1);
